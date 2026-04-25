@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { bibleVerses, dailyTasks, saintStories } from '@/lib/data';
-import { CheckCircle2, Circle, Quote, Calendar, User, Heart, RefreshCw, Sparkles, Trophy } from 'lucide-react';
+import { bibleVerses, dailyTasks, saintStories, prayerData } from '@/lib/data';
+import { CheckCircle2, Circle, Quote, Calendar, User, Heart, RefreshCw, Sparkles, Trophy, Sun, Moon, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
@@ -17,6 +17,8 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isStoryExpanded, setIsStoryExpanded] = useState(false);
+  const [currentPrayer, setCurrentPrayer] = useState<{ title: string; note: string; books: string[] } | null>(null);
+  const [isMorningMode, setIsMorningMode] = useState(true);
 
   const randomize = useCallback(() => {
     const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
@@ -27,9 +29,16 @@ export default function Home() {
     }));
     const randomStory = saintStories[Math.floor(Math.random() * saintStories.length)];
 
+    // Randomize Prayer
+    const morning = Math.random() > 0.5;
+    const prayers = morning ? prayerData.morning : prayerData.night;
+    const randomPrayer = prayers[Math.floor(Math.random() * prayers.length)];
+
     setVerse(randomVerse);
     setTasks(selectedTasks);
     setStory(randomStory);
+    setIsMorningMode(morning);
+    setCurrentPrayer(randomPrayer);
     setIsLoaded(true);
     setIsStoryExpanded(false);
   }, []);
@@ -78,7 +87,7 @@ export default function Home() {
     }, 250);
   };
 
-  if (!isLoaded || !verse || !story || !currentDate) {
+  if (!isLoaded || !verse || !story || !currentDate || !currentPrayer) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <motion.div
@@ -143,6 +152,67 @@ export default function Home() {
                 <div className="h-px w-8 bg-accent/20" />
               </div>
             </div>
+          </section>
+
+          {/* Prayer Section */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              {isMorningMode ? (
+                <Sun size={18} className="text-orange-500" />
+              ) : (
+                <Moon size={18} className="text-indigo-500" />
+              )}
+              <h2 className="text-lg font-bold text-primary">የዕለቱ ጸሎት</h2>
+            </div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={`spiritual-card overflow-hidden relative border-l-4 ${
+                isMorningMode 
+                  ? "border-l-orange-400 bg-orange-50/30" 
+                  : "border-l-indigo-400 bg-indigo-50/30"
+              }`}
+            >
+              <div className="relative z-10 space-y-4">
+                <div>
+                  <h3 className="text-sm font-bold text-accent uppercase tracking-wider mb-2">
+                    {currentPrayer.title}
+                  </h3>
+                  <p className="text-primary/80 text-sm leading-relaxed italic">
+                    {currentPrayer.note}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-accent/70 uppercase tracking-widest">
+                    <BookOpen size={14} />
+                    <span>ሊነበቡ የሚገባቸው መጻሕፍት</span>
+                  </div>
+                  <ul className="grid gap-2">
+                    {currentPrayer.books.map((book, idx) => (
+                      <li key={idx} className="flex items-center gap-3 text-sm text-primary font-medium">
+                        <div className={`w-1 h-1 rounded-full ${
+                          isMorningMode 
+                            ? "bg-orange-400" 
+                            : "bg-indigo-400"
+                        }`} />
+                        {book}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Decorative background icon */}
+              <div className="absolute -bottom-6 -right-6 opacity-[0.03] pointer-events-none">
+                {isMorningMode ? (
+                  <Sun size={120} />
+                ) : (
+                  <Moon size={120} />
+                )}
+              </div>
+            </motion.div>
           </section>
 
           {/* Daily Tasks Section */}
